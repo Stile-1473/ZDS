@@ -1,5 +1,5 @@
 # Stage 1: Build the React application
-FROM node:20 AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,10 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Copy React build output to Nginx web root
+# Remove default Nginx content
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy React build output to Nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
 # Expose port 80
