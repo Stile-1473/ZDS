@@ -15,7 +15,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend   # make sure Dockerfile exists here
+    build: ./backend
     container_name: zds-backend
     restart: always
     ports:
