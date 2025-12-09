@@ -1,5 +1,4 @@
-
-
+version: '3.9'
 
 services:
   postgres:
@@ -7,60 +6,26 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      - POSTGRES_ROOT_PASSWORD=${POSTGRES_ROOT_PASSWORD}
-      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
     ports:
       - "5432:5432"
     volumes:
-       - postgresql_data:/var/lib/postgresql/data
-
+      - postgresql_data:/var/lib/postgresql/data
 
   backend:
-    # build: ./backend
-    image: ./backend
+    build: ./backend   # make sure Dockerfile exists here
+    container_name: zds-backend
     restart: always
     ports:
       - "8080:8080"
     environment:
-      - DB_URL=${DB_URL}
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
-
-#  frontend:
-#    image: ghost1473/zds-frontend
-#    # build:
-#    #   context: ./frontend
-#    #   args:
-#    #     # provide env variables to be used when building our frontend
-#    #     - VITE_APP_BACKEND_URL=https://backend.cyizere.net/api
-#    restart: always
-#    ports:
-#      - "5002:5002"
-#    depends_on:
-#      - backend
-
-#  certbot:
-#    image: certbot/certbot
-#    container_name: certbot
-#    volumes:
-#      - /etc/letsencrypt:/etc/letsencrypt
-#      - /var/www/certbot:/var/www/certbot
-#    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --email ${CERTBOT_EMAIL} -d ${CERTBOT_DOMAIN1} -d ${CERTBOT_DOMAIN2} --agree-tos
-#
-#  watchtower:
-#    image: containrrr/watchtower
-#    container_name: watchtower
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock
-#    environment:
-#      - WATCHTOWER_CLEANUP=true
-#      - DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME}
-#      - DOCKER_HUB_PASSWORD=${DOCKER_HUB_ACCESS_TOKEN}
-#    command: --interval 300  # Checks for updates every 5 minutes
 
 volumes:
   postgresql_data:
