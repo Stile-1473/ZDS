@@ -1,32 +1,28 @@
 # Stage 1: Build the React application
-FROM node:alpine AS builder
+FROM node:20 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to leverage Docker's layer caching
-COPY package.json package-lock.json ./
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the source
 COPY . .
 
-# Build the React application for production
+# Build for production
 RUN npm run build
 
-# Stage 2: Serve the built application with Nginx
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Copy the Nginx configuration file (optional, if you have a custom one)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy the built React application from the builder stage to Nginx's web root
+# Copy React build output to Nginx web root
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Expose port 80 to allow external access to the Nginx server
+# Expose port 80
 EXPOSE 80
 
-# Start Nginx when the container launches
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
