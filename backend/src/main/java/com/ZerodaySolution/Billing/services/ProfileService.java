@@ -29,7 +29,7 @@ public class ProfileService {
    // @Value("${Billing_Profile_Activation}")
     private String activationUrl;
     private final ProfileRepository profileRepository;
-    private final EmailService emailService;
+
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
