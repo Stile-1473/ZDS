@@ -27,5 +27,14 @@ services:
     depends_on:
       - postgres
 
+  frontend:
+    build: ./frontend
+    container_name: zds-frontend
+    restart: always
+    ports:
+      - "5002:80"
+    depends_on:
+      - backend
+
 volumes:
   postgresql_data:
