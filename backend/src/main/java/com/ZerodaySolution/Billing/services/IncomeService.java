@@ -25,106 +25,102 @@ public class IncomeService {
     private final IncomeRepository incomeRepository;
     private final ProfileService profileService;
 
-    //method to save expense
-
-
-    public  IncomeDTO createIncome(IncomeDTO incomeDTO){
+    // Create income
+    public IncomeDTO createIncome(IncomeDTO incomeDTO) {
         ProfileEntity profile = profileService.getCurrentProfile();
         CategoryEntity category = categoryRepository.findById(incomeDTO.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        IncomeEntity incomeEntity = toEntity(incomeDTO,profile,category);
+        IncomeEntity incomeEntity = toEntity(incomeDTO, profile, category);
         incomeEntity = incomeRepository.save(incomeEntity);
         return toDTO(incomeEntity);
     }
 
-
-//monthly incomes
-    public List<IncomeDTO> getAllIncomesForCurrentMonthForCurrentUser(){
+    // Monthly incomes
+    public List<IncomeDTO> getAllIncomesForCurrentMonthForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
         LocalDate now = LocalDate.now();
-        LocalDate startDate = now.withDayOfMonth(1);
-        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
-        List< IncomeEntity > income = incomeRepository.findByProfileIdAndDateBetween(profile.getId(),startDate,endDate);
-        return income.stream().map(this::toDTO).toList();
 
+        List<IncomeEntity> incomes =
+                incomeRepository.findMonthlyIncomesWithCategory(
+                        profile.getId(),
+                        now.withDayOfMonth(1),
+                        now.withDayOfMonth(now.lengthOfMonth())
+                );
 
+        return incomes.stream().map(this::toDTO).toList();
     }
 
+    // Latest 5 incomes
+    public List<IncomeDTO> getLatestIncomes() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        return incomeRepository.findTop5WithCategory(profile.getId())
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
-    //Delete expense
-    public void deleteIncome(Long id){
-        ProfileEntity profile =profileService.getCurrentProfile();
+    // Filter income
+    public List<IncomeDTO> filterIncome(LocalDate startDate, LocalDate endDate, String keyword, Sort sort) {
+        ProfileEntity profile = profileService.getCurrentProfile();
 
-        IncomeEntity income= incomeRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Income not found"));
+        return incomeRepository.filterWithCategory(
+                        profile.getId(),
+                        startDate,
+                        endDate,
+                        keyword,
+                        sort
+                )
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
-        if( !income.getProfile().getId().equals(profile.getId())){
-                throw  new RuntimeException("Unauthorized to delete");
+    // Delete income
+    public void deleteIncome(Long id) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+
+        IncomeEntity income = incomeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Income not found"));
+
+        if (!income.getProfile().getId().equals(profile.getId())) {
+            throw new RuntimeException("Unauthorized to delete");
         }
 
         incomeRepository.delete(income);
     }
 
-    //Get latest 5 incomes
-
-    public List<IncomeDTO> getLatestIncomes(){
+    // Total income
+    public BigDecimal totalIncomeForCurrentUser() {
         ProfileEntity profile = profileService.getCurrentProfile();
-        List< IncomeEntity> latest5Incomes = incomeRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
-
-        return latest5Incomes.stream().map(this::toDTO).toList();
-
-    }
-
-    //total expenses of current user
-
-    public BigDecimal totalIncomeForCurrentUser(){
-        ProfileEntity profile = profileService.getCurrentProfile();
-        BigDecimal incomeTotal =incomeRepository.findTotalIncomeByProfileId(profile.getId());
-
+        BigDecimal incomeTotal = incomeRepository.findTotalIncomeByProfileId(profile.getId());
         return incomeTotal != null ? incomeTotal : BigDecimal.ZERO;
-
     }
 
-    //Filter income
-    public List<IncomeDTO> filterIncome(LocalDate startDate, LocalDate endDate, String keyword, Sort sort){
-        ProfileEntity profile = profileService.getCurrentProfile();
-        List<IncomeEntity> found = incomeRepository.
-                findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(),startDate,endDate,keyword,sort);
+    // ================= HELPERS =================
 
-        return found.stream().map(this::toDTO).toList();
-    }
-
-    //helper methods
-
-    private IncomeEntity toEntity(IncomeDTO incomeDTO, ProfileEntity profile, CategoryEntity category){
-
+    private IncomeEntity toEntity(IncomeDTO dto, ProfileEntity profile, CategoryEntity category) {
         return IncomeEntity.builder()
-                .name(incomeDTO.getName())
-                .icon(incomeDTO.getIcon())
-                .amount(incomeDTO.getAmount())
-                .date(incomeDTO.getDate())
+                .name(dto.getName())
+                .icon(dto.getIcon())
+                .amount(dto.getAmount())
+                .date(dto.getDate())
                 .profile(profile)
                 .category(category)
-
                 .build();
     }
 
-    private IncomeDTO toDTO(IncomeEntity incomeEntity){
-
+    private IncomeDTO toDTO(IncomeEntity income) {
         return IncomeDTO.builder()
-                .id(incomeEntity.getId())
-                .name(incomeEntity.getName())
-                .icon(incomeEntity.getIcon())
-                .amount(incomeEntity.getAmount())
-                .date(incomeEntity.getDate())
-                .categoryId(incomeEntity.getCategory() != null ? incomeEntity.getCategory().getId() : null)
-                .categoryName(incomeEntity.getCategory() != null ? incomeEntity.getCategory().getName() : "N/A")
-                .createdAt(incomeEntity.getCreatedAt())
-                .updatedAt(incomeEntity.getUpdatedAt())
-
+                .id(income.getId())
+                .name(income.getName())
+                .icon(income.getIcon())
+                .amount(income.getAmount())
+                .date(income.getDate())
+                .categoryId(income.getCategory().getId())
+                .categoryName(income.getCategory().getName())
+                .createdAt(income.getCreatedAt())
+                .updatedAt(income.getUpdatedAt())
                 .build();
-
     }
-
 }

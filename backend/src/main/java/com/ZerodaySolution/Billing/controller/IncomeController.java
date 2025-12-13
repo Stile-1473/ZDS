@@ -29,7 +29,7 @@ public class IncomeController {
 
 
     @GetMapping("/all")
-    public ResponseEntity<List<IncomeDTO>> getMonthlyExpenses(){
+    public ResponseEntity<List<IncomeDTO>> getMonthlyIncomes(){
 
         List<IncomeDTO> list = service.getAllIncomesForCurrentMonthForCurrentUser();
 
